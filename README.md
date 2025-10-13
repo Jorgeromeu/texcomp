@@ -7,7 +7,7 @@ This is a template repo for [eframe](https://github.com/emilk/egui/tree/master/c
 
 The goal is for this to be the simplest way to get started writing a GUI app in Rust.
 
-You can compile your app natively or for the web, and share it using Github Pages.
+You can compile your app natively or for the web, and tex_comp it using Github Pages.
 
 ## Getting started
 

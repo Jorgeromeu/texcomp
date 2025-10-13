@@ -37,8 +37,12 @@ impl<'a, T> Selector<'a, T> {
                 let is_selected = i == *self.selected;
                 let is_secondary_selected = Some(i) == *self.secondary_selected;
 
-                let desired_size = egui::vec2(ui.available_width(), ui.spacing().interact_size.y);
+                let desired_size = egui::vec2(ui.available_width(), ui.spacing().interact_size.y + 8.0);
                 let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+
+                // Default background (slightly lighter than panel background)
+                let default_bg = ui.visuals().window_fill.linear_multiply(1.2);
+                ui.painter().rect_filled(rect, 0.0, default_bg);
 
                 // Highlight on hover
                 if response.hovered() {
@@ -56,7 +60,7 @@ impl<'a, T> Selector<'a, T> {
                 };
 
                 if let Some(color) = strip_color {
-                    // Darker background
+                    // Darker background for selected items
                     ui.painter()
                         .rect_filled(rect, 0.0, ui.visuals().widgets.active.bg_fill);
 

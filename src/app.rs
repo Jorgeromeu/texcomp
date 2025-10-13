@@ -50,12 +50,9 @@ impl TexCompApp {
             for file in files {
                 match load_asset(ctx, &file) {
                     Ok(asset) => match asset {
-                        AssetType::Image(named_texture) => {
+                        AssetType::Gltf(named_texture) | AssetType::Image(named_texture) => {
                             self.items.push(named_texture);
                         }
-                        AssetType::Gltf(named_texture) => {
-                            self.items.push(named_texture);
-                        },
                     },
                     Err(err) => {
                         self.error(&format!(
@@ -96,13 +93,14 @@ impl eframe::App for TexCompApp {
         selector.handle_input(ctx);
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
+            // title
             ui.vertical_centered(|ui| {
                 ui.add_space(5.0);
                 ui.heading(egui::RichText::new("TexComp").monospace());
                 ui.add_space(5.0);
             });
 
-            ui.separator();
+            // textures list
             selector.show(ui, |item| &item.name);
         });
 
@@ -110,7 +108,14 @@ impl eframe::App for TexCompApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             self.show_file_drag(ctx, ui);
-            self.show_selected_image(ui);
+
+            if self.items.is_empty() {
+                ui.centered_and_justified(|ui| {
+                    ui.label(egui::RichText::new("Drag Files to Add").size(18.0));
+                });
+            } else {
+                self.show_selected_image(ui);
+            }
         });
 
         self.toasts.show(ctx);

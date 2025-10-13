@@ -21,7 +21,7 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "TexComp",
         native_options,
-        Box::new(|cc| Ok(Box::new(TexComp::TexCompApp::new(cc)))),
+        Box::new(|cc| Ok(Box::new(tex_comp::TexCompApp::new(cc)))),
     )
 }
 

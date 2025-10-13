@@ -1,5 +1,5 @@
 [package]
-name = "TexComp"
+name = "tex_comp"
 version = "0.1.0"
 authors = ["Jorge Romeu Huidobro"]
 edition = "2024"
