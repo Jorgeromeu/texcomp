@@ -24,6 +24,10 @@ log = "0.4.27"
 
 # You only need serde if you want app persistence:
 serde = { version = "1.0.219", features = ["derive"] }
+image = "0.25.8"
+egui-toast = "0.18.0"
+gltf = "1.4.1"
+anyhow = "1.0.100"
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

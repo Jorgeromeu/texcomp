@@ -1,12 +1,12 @@
-pub struct Selector<'a> {
-    items: &'a mut Vec<String>,
+pub struct Selector<'a, T> {
+    items: &'a mut Vec<T>,
     selected: &'a mut usize,
     secondary_selected: &'a mut Option<usize>,
 }
 
-impl<'a> Selector<'a> {
+impl<'a, T> Selector<'a, T> {
     pub fn new(
-        items: &'a mut Vec<String>,
+        items: &'a mut Vec<T>,
         selected: &'a mut usize,
         secondary_selected: &'a mut Option<usize>,
     ) -> Self {
@@ -25,7 +25,11 @@ impl<'a> Selector<'a> {
         }
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui) {
+    pub fn get_selected(&self) -> Option<&T> {
+        self.items.get(*self.selected)
+    }
+
+    pub fn show(&mut self, ui: &mut egui::Ui, name_fn: impl Fn(&T) -> &str) {
         ui.scope(|ui| {
             ui.spacing_mut().item_spacing.y = 0.0;
 
@@ -74,7 +78,7 @@ impl<'a> Selector<'a> {
                 ui.painter().text(
                     rect.left_center() + egui::vec2(ui.spacing().item_spacing.x, 0.0),
                     egui::Align2::LEFT_CENTER,
-                    item,
+                    name_fn(item),
                     egui::TextStyle::Body.resolve(ui.style()),
                     text_color,
                 );
