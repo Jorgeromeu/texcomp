@@ -102,6 +102,19 @@ impl eframe::App for TexCompApp {
 
             // textures list
             selector.show(ui, |item| &item.name);
+
+            // Push footer to bottom
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                ui.add_space(5.0);
+                ui.horizontal(|ui| {
+                    ui.label(egui::RichText::new("v0.1.0").small());
+                    ui.hyperlink_to(
+                        egui::RichText::new("GitHub").small(),
+                        "https://github.com/Jorgeromeu/texcomp",
+                    );
+                });
+                ui.add_space(5.0);
+            });
         });
 
         self.handle_file_drop(ctx);
