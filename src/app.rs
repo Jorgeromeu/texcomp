@@ -111,7 +111,7 @@ impl eframe::App for TexCompApp {
 
             if self.items.is_empty() {
                 ui.centered_and_justified(|ui| {
-                    ui.label(egui::RichText::new("Drag Files to Add").size(18.0));
+                    ui.label(egui::RichText::new("Drag Image or GLB").size(18.0));
                 });
             } else {
                 self.show_selected_image(ui);

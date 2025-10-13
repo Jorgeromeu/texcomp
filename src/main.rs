@@ -51,7 +51,7 @@ fn main() {
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(TexComp::TexCompApp::new(cc)))),
+                Box::new(|cc| Ok(Box::new(tex_comp::TexCompApp::new(cc)))),
             )
             .await;
 
