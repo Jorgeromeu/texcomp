@@ -1,23 +1,29 @@
-use eframe::egui;
+use egui;
 
-// Reusable image viewer widget
+use crate::image::image::ImageAsset;
+use crate::viewer::ViewerWidget;
+
 pub struct ImageViewerWidget {
     zoom: f32,
     pan_offset: egui::Vec2,
+    zoom_min: f32,
+    zoom_max: f32,
 }
 
 impl Default for ImageViewerWidget {
     fn default() -> Self {
         Self {
             zoom: 1.0,
+            zoom_max: 20.0,
+            zoom_min: 0.1,
             pan_offset: egui::Vec2::ZERO,
         }
     }
 }
 
-impl ImageViewerWidget {
-    pub fn show(&mut self, ui: &mut egui::Ui, texture: &egui::TextureHandle) {
-        let image_size = texture.size_vec2();
+impl ViewerWidget<ImageAsset> for ImageViewerWidget {
+    fn show_viewer(&mut self, ui: &mut egui::Ui, asset: &ImageAsset) {
+        let image_size = asset.texture.size_vec2();
 
         // Allocate the entire available space for the image viewer
         let (response, painter) =
@@ -42,7 +48,7 @@ impl ImageViewerWidget {
                 }
 
                 self.zoom *= zoom_delta;
-                self.zoom = self.zoom.clamp(0.1, 20.0);
+                self.zoom = self.zoom.clamp(self.zoom_min, self.zoom_max);
             }
         }
 
@@ -62,36 +68,23 @@ impl ImageViewerWidget {
         let image_rect = egui::Rect::from_center_size(viewer_center + self.pan_offset, zoomed_size);
 
         // Draw checkerboard background (optional)
-        draw_checkerboard(&painter, viewer_rect);
+        // draw_checkerboard(&painter, viewer_rect);
 
         // Draw the image
         painter.image(
-            texture.id(),
+            asset.texture.id(),
             image_rect,
             egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
             egui::Color32::WHITE,
         );
     }
-}
 
-fn draw_checkerboard(painter: &egui::Painter, rect: egui::Rect) {
-    let checker_size = 16.0;
-    let color1 = egui::Color32::from_gray(128);
-    let color2 = egui::Color32::from_gray(160);
-
-    let min_x = (rect.min.x / checker_size).floor() as i32;
-    let max_x = (rect.max.x / checker_size).ceil() as i32;
-    let min_y = (rect.min.y / checker_size).floor() as i32;
-    let max_y = (rect.max.y / checker_size).ceil() as i32;
-
-    for y in min_y..max_y {
-        for x in min_x..max_x {
-            let color = if (x + y) % 2 == 0 { color1 } else { color2 };
-            let square_rect = egui::Rect::from_min_size(
-                egui::pos2(x as f32 * checker_size, y as f32 * checker_size),
-                egui::vec2(checker_size, checker_size),
-            );
-            painter.rect_filled(square_rect, 0.0, color);
-        }
+    fn show_info(&mut self, ui: &mut egui::Ui) {
+        ui.add(
+            egui::Slider::new(&mut self.zoom, self.zoom_min..=self.zoom_max)
+                .logarithmic(true)
+                .text("Zoom")
+                .suffix("x"),
+        );
     }
 }
