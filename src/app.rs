@@ -3,7 +3,9 @@ use crate::image::viewer::ImageViewerWidget;
 use crate::selector::Selector;
 use crate::viewer::ViewerWidget;
 use egui_toast::{Toast, ToastOptions, Toasts};
-use three_d_asset::io::load_and_deserialize_async;
+
+#[cfg(debug_assertions)]
+use crate::debug::DebugManager;
 
 pub struct NamedAsset {
     pub name: String,
@@ -15,6 +17,8 @@ pub struct TexCompApp {
     toasts: Toasts,
     image_viewer: ImageViewerWidget,
     selector: Selector,
+    #[cfg(debug_assertions)]
+    debug: DebugManager,
 }
 
 impl Default for TexCompApp {
@@ -26,6 +30,8 @@ impl Default for TexCompApp {
                 .direction(egui::Direction::BottomUp),
             image_viewer: ImageViewerWidget::default(),
             selector: Selector::new(),
+            #[cfg(debug_assertions)]
+            debug: DebugManager::default(),
         }
     }
 }
@@ -135,6 +141,15 @@ impl TexCompApp {
 
 impl eframe::App for TexCompApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        #[cfg(debug_assertions)]
+        {
+            self.debug.show_debug_ui(ctx, _frame);
+            if self.debug.show_debug_pane {
+                self.debug.show_debug_pane(ctx);
+                return;
+            }
+        }
+
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             // title
             ui.vertical_centered(|ui| {
