@@ -4,6 +4,7 @@ mod app;
 mod asset;
 mod image;
 mod model_asset;
+mod model_viewer;
 mod selector;
 mod viewer;
 

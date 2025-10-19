@@ -1,11 +1,14 @@
 use crate::asset::{Asset, AssetEnum};
 use crate::image::viewer::ImageViewerWidget;
+use crate::model_viewer::ModelViewerWidget;
 use crate::selector::Selector;
+use crate::viewer::ViewerWidget;
 use egui_toast::{Toast, ToastOptions, Toasts};
 
 pub struct App {
     items: Vec<AssetEnum>,
     image_viewer: ImageViewerWidget,
+    model_viewer: ModelViewerWidget,
     selector: Selector,
     sidebar_open: bool,
     help_open: bool,
@@ -20,6 +23,7 @@ impl Default for App {
                 .anchor(egui::Align2::RIGHT_BOTTOM, (10.0, 10.0))
                 .direction(egui::Direction::BottomUp),
             image_viewer: ImageViewerWidget::default(),
+            model_viewer: ModelViewerWidget::default(),
             selector: Selector::new(),
             sidebar_open: false,
             help_open: false,
@@ -139,13 +143,7 @@ impl App {
                 self.image_viewer.show_viewer(ui, image_asset);
             }
             AssetEnum::Model(model) => {
-                ui.centered_and_justified(|ui| {
-                    ui.label(format!(
-                        "verts: {}, indices: {}",
-                        model.verts.len(),
-                        model.indices.len()
-                    ));
-                });
+                self.model_viewer.show_viewer(ui, model);
             }
         }
 
