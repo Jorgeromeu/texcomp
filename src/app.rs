@@ -1,5 +1,4 @@
 use crate::asset::{Asset, AssetEnum};
-use crate::image::image::ImageAsset;
 use crate::image::viewer::ImageViewerWidget;
 use crate::selector::Selector;
 use egui_toast::{Toast, ToastOptions, Toasts};
@@ -119,7 +118,7 @@ impl App {
             .default_width(200.0);
 
         // get selected asset
-        let asset_opt = self.items.get(self.selector.selected_index);
+        let asset_opt = self.items.get_mut(self.selector.selected_index);
 
         // handle case of no asset
         let Some(asset) = asset_opt else {
@@ -129,6 +128,7 @@ impl App {
             return;
         };
 
+        // show
         match asset {
             AssetEnum::Image(image_asset) => {
                 self.image_viewer.show_viewer(ui, image_asset);
@@ -157,7 +157,7 @@ impl eframe::App for App {
         self.handle_file_drop(ctx);
 
         // handle input
-        if ctx.input(|i| i.key_pressed(egui::Key::H)) {
+        if ctx.input(|i| i.key_pressed(egui::Key::S)) {
             self.sidebar_open = !self.sidebar_open;
         }
 
@@ -169,7 +169,7 @@ impl eframe::App for App {
             egui::Window::new("Help")
                 .collapsible(false)
                 .resizable(true)
-                .default_size(egui::vec2(450.0, 350.0))
+                // .default_size(egui::vec2(450.0, 350.0))
                 .open(&mut self.help_open)
                 .show(ctx, |ui| {
                     ui.label("📁 Drop files into the window to view");
@@ -177,7 +177,7 @@ impl eframe::App for App {
                     ui.heading("Keyboard Shortcuts");
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new("H").monospace().strong());
+                        ui.label(egui::RichText::new("S").monospace().strong());
                         ui.label("Toggle between sidebar and bottom bar");
                     });
                     ui.horizontal(|ui| {
