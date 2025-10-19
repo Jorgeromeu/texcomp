@@ -3,6 +3,7 @@
 mod app;
 mod asset;
 mod image;
+mod model_asset;
 mod selector;
 mod viewer;
 

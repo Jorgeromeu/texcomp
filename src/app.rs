@@ -64,13 +64,18 @@ impl App {
         for file in files {
             let loaded_asset = AssetEnum::from_dropped_file(ctx, &file);
 
-            let Ok(asset) = loaded_asset else {
-                self.error(&format!("Failed to load asset from file: {}", file.name));
-                continue;
-            };
-
-            self.items.push(asset);
-            self.selector.selected_index = self.items.len() - 1;
+            match loaded_asset {
+                Err(e) => {
+                    self.error(&format!(
+                        "Failed to load asset from file: {}. Error: {}",
+                        file.name, e
+                    ));
+                }
+                Ok(asset) => {
+                    self.items.push(asset);
+                    self.selector.selected_index = self.items.len() - 1;
+                }
+            }
         }
     }
 
@@ -128,15 +133,29 @@ impl App {
             return;
         };
 
-        // show
+        // Show Viewer
         match asset {
             AssetEnum::Image(image_asset) => {
                 self.image_viewer.show_viewer(ui, image_asset);
-                window.show(ctx, |ui| {
-                    self.image_viewer.show_info(ui);
+            }
+            AssetEnum::Model(model) => {
+                ui.centered_and_justified(|ui| {
+                    ui.label(format!(
+                        "verts: {}, indices: {}",
+                        model.verts.len(),
+                        model.indices.len()
+                    ));
                 });
             }
         }
+
+        // show info window
+        window.show(ctx, |ui| match asset {
+            AssetEnum::Image(image_asset) => {
+                self.image_viewer.show_info(ui);
+            }
+            AssetEnum::Model(model) => {}
+        });
     }
 
     pub fn show_footer(&mut self, ui: &mut egui::Ui) {
@@ -169,7 +188,6 @@ impl eframe::App for App {
             egui::Window::new("Help")
                 .collapsible(false)
                 .resizable(true)
-                // .default_size(egui::vec2(450.0, 350.0))
                 .open(&mut self.help_open)
                 .show(ctx, |ui| {
                     ui.label("📁 Drop files into the window to view");

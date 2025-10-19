@@ -26,11 +26,9 @@ log = "0.4.27"
 serde = { version = "1.0.219", features = ["derive"] }
 image = "0.25.8"
 egui-toast = "0.18.0"
-gltf = "1.4.1"
 anyhow = "1.0.100"
 three-d = "0.18.2"
-three-d-asset = "0.9.2"
-enum_dispatch = "0.3.13"
+three-d-asset = { version="0.9.2", features=["gltf", "obj", "image", "png", "jpeg"]}
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -48,8 +46,6 @@ opt-level = 2 # fast and small wasm
 [profile.dev.package."*"]
 opt-level = 2
 
-
-[patch.crates-io]
 
 # If you want to use the bleeding edge version of egui and eframe:
 # egui = { git = "https://github.com/emilk/egui", branch = "main" }
