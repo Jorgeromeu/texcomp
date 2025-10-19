@@ -1,10 +1,31 @@
 use crate::asset::Asset;
 use anyhow::{Context, Result};
-
 use egui::{self};
 
 pub struct ImageAsset {
-    pub texture: egui::TextureHandle,
+    pub id: String,
+    pub image: egui::ColorImage,
+}
+
+impl ImageAsset {
+    pub fn size(&self) -> egui::Vec2 {
+        egui::vec2(self.image.size[0] as f32, self.image.size[1] as f32)
+    }
+
+    pub fn to_texture(
+        &self,
+        ctx: &egui::Context,
+        name: &str,
+        filter_mode: egui::TextureFilter,
+    ) -> egui::TextureHandle {
+        let opt = egui::TextureOptions {
+            magnification: filter_mode,
+            minification: filter_mode,
+            ..Default::default()
+        };
+
+        ctx.load_texture(name, self.image.clone(), opt)
+    }
 }
 
 impl Asset for ImageAsset {
@@ -20,14 +41,13 @@ impl Asset for ImageAsset {
         let pixels = image_buffer.as_flat_samples();
         let color_image = egui::ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
 
-        let opt = egui::TextureOptions {
-            magnification: egui::TextureFilter::Nearest,
-            minification: egui::TextureFilter::Nearest,
-            ..Default::default()
-        };
+        Ok(ImageAsset {
+            image: color_image,
+            id: file.name.clone(),
+        })
+    }
 
-        let texture = ctx.load_texture(&file.name, color_image, opt);
-
-        Ok(ImageAsset { texture })
+    fn get_id(&self) -> &str {
+        return &self.id;
     }
 }

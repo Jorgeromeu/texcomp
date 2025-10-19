@@ -1,13 +1,43 @@
-use egui;
+use std::collections::HashMap;
 
 use crate::image::image::ImageAsset;
-use crate::viewer::ViewerWidget;
+
+#[derive(Hash, Eq, PartialEq, Clone)]
+struct TextureDescriptor {
+    id: String,
+    filter_mode: egui::TextureFilter,
+}
+
+struct TextureCache {
+    textures: HashMap<TextureDescriptor, egui::TextureHandle>,
+}
+
+impl TextureCache {
+    pub fn new() -> Self {
+        Self {
+            textures: HashMap::new(),
+        }
+    }
+
+    pub fn get_texture(
+        &mut self,
+        ctx: &egui::Context,
+        asset: &ImageAsset,
+        descriptor: TextureDescriptor,
+    ) -> &egui::TextureHandle {
+        self.textures
+            .entry(descriptor.clone())
+            .or_insert_with(|| asset.to_texture(ctx, &descriptor.id, descriptor.filter_mode))
+    }
+}
 
 pub struct ImageViewerWidget {
     zoom: f32,
     pan_offset: egui::Vec2,
     zoom_min: f32,
     zoom_max: f32,
+    filter_mode: egui::TextureFilter,
+    texture_cache: TextureCache,
 }
 
 impl Default for ImageViewerWidget {
@@ -17,13 +47,15 @@ impl Default for ImageViewerWidget {
             zoom_max: 20.0,
             zoom_min: 0.1,
             pan_offset: egui::Vec2::ZERO,
+            filter_mode: egui::TextureFilter::Nearest,
+            texture_cache: TextureCache::new(),
         }
     }
 }
 
-impl ViewerWidget<ImageAsset> for ImageViewerWidget {
-    fn show_viewer(&mut self, ui: &mut egui::Ui, asset: &ImageAsset) {
-        let image_size = asset.texture.size_vec2();
+impl ImageViewerWidget {
+    pub fn show_viewer(&mut self, ui: &mut egui::Ui, asset: &ImageAsset) {
+        let image_size = asset.size();
 
         // Allocate the entire available space for the image viewer
         let (response, painter) =
@@ -67,24 +99,45 @@ impl ViewerWidget<ImageAsset> for ImageViewerWidget {
         // Center the image with pan offset
         let image_rect = egui::Rect::from_center_size(viewer_center + self.pan_offset, zoomed_size);
 
-        // Draw checkerboard background (optional)
-        // draw_checkerboard(&painter, viewer_rect);
+        let texture_desc = TextureDescriptor {
+            id: asset.id.clone(),
+            filter_mode: self.filter_mode,
+        };
+
+        let texture = self
+            .texture_cache
+            .get_texture(ui.ctx(), asset, texture_desc);
 
         // Draw the image
         painter.image(
-            asset.texture.id(),
+            texture.id(),
             image_rect,
             egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
             egui::Color32::WHITE,
         );
     }
 
-    fn show_info(&mut self, ui: &mut egui::Ui) {
+    pub fn show_info(&mut self, ui: &mut egui::Ui) {
         ui.add(
             egui::Slider::new(&mut self.zoom, self.zoom_min..=self.zoom_max)
                 .logarithmic(true)
                 .text("Zoom")
                 .suffix("x"),
         );
+        ui.horizontal(|ui| {
+            ui.label("Filter Mode:");
+            ui.selectable_value(
+                &mut self.filter_mode,
+                egui::TextureFilter::Nearest,
+                "Nearest",
+            );
+            ui.selectable_value(&mut self.filter_mode, egui::TextureFilter::Linear, "Linear");
+        });
+    }
+
+    pub fn show_help(&mut self, ui: &mut egui::Ui) {
+        ui.add(egui::Label::new("Image Viewer Help:"));
+        ui.add(egui::Label::new("- Scroll to zoom in/out"));
+        ui.add(egui::Label::new("- Click and drag to pan the image"));
     }
 }

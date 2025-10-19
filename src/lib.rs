@@ -6,4 +6,4 @@ mod image;
 mod selector;
 mod viewer;
 
-pub use app::TexCompApp;
+pub use app::App;

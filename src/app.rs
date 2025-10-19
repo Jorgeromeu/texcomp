@@ -1,23 +1,19 @@
 use crate::asset::{Asset, AssetEnum};
+use crate::image::image::ImageAsset;
 use crate::image::viewer::ImageViewerWidget;
 use crate::selector::Selector;
-use crate::viewer::ViewerWidget;
 use egui_toast::{Toast, ToastOptions, Toasts};
-use three_d_asset::io::load_and_deserialize_async;
 
-pub struct NamedAsset {
-    pub name: String,
-    pub asset: AssetEnum,
-}
-
-pub struct TexCompApp {
-    items: Vec<NamedAsset>,
-    toasts: Toasts,
+pub struct App {
+    items: Vec<AssetEnum>,
     image_viewer: ImageViewerWidget,
     selector: Selector,
+    sidebar_open: bool,
+    help_open: bool,
+    toasts: Toasts,
 }
 
-impl Default for TexCompApp {
+impl Default for App {
     fn default() -> Self {
         Self {
             items: vec![],
@@ -26,12 +22,25 @@ impl Default for TexCompApp {
                 .direction(egui::Direction::BottomUp),
             image_viewer: ImageViewerWidget::default(),
             selector: Selector::new(),
+            sidebar_open: false,
+            help_open: false,
         }
     }
 }
 
-impl TexCompApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+impl App {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        cc.egui_ctx.style_mut(|style| {
+            // No dropshadows
+            style.visuals.window_shadow = egui::epaint::Shadow::NONE;
+
+            // Make window title font smaller
+            style.text_styles.insert(
+                egui::TextStyle::Name("window_title".into()),
+                egui::FontId::new(12.0, egui::FontFamily::Proportional),
+            );
+        });
+
         Default::default()
     }
 
@@ -46,8 +55,8 @@ impl TexCompApp {
     }
 
     pub fn handle_file_drop(&mut self, ctx: &egui::Context) {
+        // check if fies are dropped
         let is_dropped = ctx.input(|i| !i.raw.dropped_files.is_empty());
-
         if !is_dropped {
             return;
         }
@@ -61,9 +70,7 @@ impl TexCompApp {
                 continue;
             };
 
-            let name = file.name;
-            let named_asset = NamedAsset { name, asset };
-            self.items.push(named_asset);
+            self.items.push(asset);
             self.selector.selected_index = self.items.len() - 1;
         }
     }
@@ -122,7 +129,7 @@ impl TexCompApp {
             return;
         };
 
-        match &asset.asset {
+        match asset {
             AssetEnum::Image(image_asset) => {
                 self.image_viewer.show_viewer(ui, image_asset);
                 window.show(ctx, |ui| {
@@ -131,36 +138,59 @@ impl TexCompApp {
             }
         }
     }
+
+    pub fn show_footer(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.toggle_value(&mut self.help_open, "Help");
+
+            ui.label(egui::RichText::new("v0.1.0").small());
+            ui.hyperlink_to(
+                egui::RichText::new("GitHub").small(),
+                "https://github.com/Jorgeromeu/texcomp",
+            );
+        });
+    }
 }
 
-impl eframe::App for TexCompApp {
+impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            // title
-            ui.vertical_centered(|ui| {
-                ui.add_space(5.0);
-                ui.heading(egui::RichText::new("TexComp").monospace());
-                ui.add_space(5.0);
-            });
-
-            // selector ui
-            self.selector.show(ui, &mut self.items, |item| &item.name);
-
-            // Push footer to bottom
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                ui.add_space(5.0);
-                ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new("v0.1.0").small());
-                    ui.hyperlink_to(
-                        egui::RichText::new("GitHub").small(),
-                        "https://github.com/Jorgeromeu/texcomp",
-                    );
-                });
-                ui.add_space(5.0);
-            });
-        });
-
         self.handle_file_drop(ctx);
+
+        // handle input
+        if ctx.input(|i| i.key_pressed(egui::Key::H)) {
+            self.sidebar_open = !self.sidebar_open;
+        }
+
+        if ctx.input(|i| i.key_pressed(egui::Key::Questionmark)) {
+            self.help_open = !self.help_open;
+        }
+
+        if self.help_open {
+            egui::Window::new("Help")
+                .collapsible(false)
+                .resizable(true)
+                .default_size(egui::vec2(450.0, 350.0))
+                .open(&mut self.help_open)
+                .show(ctx, |ui| {
+                    ui.label("📁 Drop files into the window to view");
+                    ui.separator();
+                    ui.heading("Keyboard Shortcuts");
+                    ui.add_space(8.0);
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("H").monospace().strong());
+                        ui.label("Toggle between sidebar and bottom bar");
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("?").monospace().strong());
+                        ui.label("Toggle help");
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label(egui::RichText::new("←/→").monospace().strong());
+                        ui.label("Switch between assets");
+                    });
+                    self.image_viewer.show_help(ui);
+                });
+        }
 
         egui::CentralPanel::default()
             .frame(egui::Frame {
@@ -172,6 +202,30 @@ impl eframe::App for TexCompApp {
                 self.show_viewer(ui, ctx);
                 self.show_drop_overlay(ctx, ui);
             });
+
+        egui::SidePanel::left("side_panel")
+            .resizable(true)
+            .show_animated(ctx, self.sidebar_open, |ui| {
+                // selector ui
+                self.selector
+                    .show(ui, &mut self.items, |item| &item.get_id());
+                // Push footer to bottom
+                ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                    ui.add_space(5.0);
+                    self.show_footer(ui);
+                    ui.add_space(5.0);
+                });
+            });
+
+        egui::TopBottomPanel::bottom("bottom_bar").show_animated(ctx, !self.sidebar_open, |ui| {
+            ui.horizontal(|ui| {
+                self.selector
+                    .show_horizontal(ui, &mut self.items, |item| &item.get_id());
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    self.show_footer(ui);
+                });
+            });
+        });
 
         self.toasts.show(ctx);
     }

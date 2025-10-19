@@ -6,6 +6,8 @@ pub trait Asset {
     fn from_dropped_file(ctx: &egui::Context, file: &egui::DroppedFile) -> Result<Self>
     where
         Self: Sized;
+
+    fn get_id(&self) -> &str;
 }
 
 pub enum AssetEnum {
@@ -13,6 +15,12 @@ pub enum AssetEnum {
 }
 
 impl Asset for AssetEnum {
+    fn get_id(&self) -> &str {
+        match self {
+            AssetEnum::Image(image_asset) => &image_asset.get_id(),
+        }
+    }
+
     fn from_dropped_file(ctx: &egui::Context, file: &egui::DroppedFile) -> Result<Self>
     where
         Self: Sized,
