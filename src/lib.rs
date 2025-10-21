@@ -2,6 +2,7 @@
 
 mod app;
 mod asset;
+mod egui_ext;
 mod image;
 mod model_asset;
 mod model_viewer;
