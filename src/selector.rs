@@ -31,30 +31,30 @@ impl Selector {
         let next = ui.input(|i| i.any_pressed(&[egui::Key::ArrowDown, egui::Key::ArrowRight]));
 
         if prev {
-            self.selected_index = (self.selected_index + items.len() - 1) % items.len();
+            self.selected_index = self.selected_index.saturating_sub(1);
         } else if next {
-            self.selected_index = (self.selected_index + 1) % items.len();
+            self.selected_index = (self.selected_index + 1).min(items.len() - 1);
         }
     }
 
-    fn show_item(
-        &mut self,
-        ui: &mut egui::Ui,
-        index: usize,
-        text: &str,
-        orientation: Orientation,
-    ) -> (bool, bool) {
-        let is_selected = index == self.selected_index;
-        let font_id = egui::TextStyle::Monospace.resolve(ui.style());
+    fn font_id(&self, ui: &egui::Ui) -> egui::FontId {
+        let mut font = egui::TextStyle::Monospace.resolve(ui.style());
+        font.size = 10.0;
+        font
+    }
 
-        // Calculate dimensions
-        let size = match orientation {
+    fn calculate_size(&self, ui: &egui::Ui, text: &str, orientation: Orientation) -> egui::Vec2 {
+        match orientation {
             Orientation::Vertical => {
                 egui::vec2(ui.available_width(), ui.spacing().interact_size.y + 8.0)
             }
             Orientation::Horizontal => {
                 let galley = ui.fonts(|f| {
-                    f.layout_no_wrap(text.to_string(), font_id.clone(), ui.visuals().text_color())
+                    f.layout_no_wrap(
+                        text.to_string(),
+                        self.font_id(ui),
+                        ui.visuals().text_color(),
+                    )
                 });
                 egui::vec2(
                     galley.size().x
@@ -64,38 +64,20 @@ impl Selector {
                     galley.size().y * Self::ENTRY_HEIGHT_MULTIPLIER,
                 )
             }
-        };
+        }
+    }
 
-        let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
-
-        // Content area (excluding strip for horizontal)
-        let content_rect = match orientation {
-            Orientation::Vertical => rect,
-            Orientation::Horizontal => egui::Rect::from_min_max(
-                egui::pos2(rect.left(), rect.top() + Self::STRIP_WIDTH),
-                rect.max,
-            ),
-        };
-
-        // Close button
-        let close_center = egui::pos2(
-            content_rect.right() - Self::CLOSE_BUTTON_SIZE / 2.0 - Self::CLOSE_BUTTON_MARGIN,
-            content_rect.center().y,
-        );
-        let close_response = ui.interact(
-            egui::Rect::from_center_size(
-                close_center,
-                egui::vec2(Self::CLOSE_BUTTON_SIZE, Self::CLOSE_BUTTON_SIZE),
-            ),
-            ui.id().with(("close", index)),
-            egui::Sense::click(),
-        );
-
-        // Draw background layers
+    fn draw_background(
+        &self,
+        ui: &egui::Ui,
+        rect: egui::Rect,
+        is_selected: bool,
+        is_hovered: bool,
+    ) {
         let bg = ui.visuals().window_fill.linear_multiply(1.2);
         ui.painter().rect_filled(rect, 0.0, bg);
 
-        if response.hovered() {
+        if is_hovered {
             ui.painter()
                 .rect_filled(rect, 0.0, ui.visuals().widgets.hovered.bg_fill);
         }
@@ -103,54 +85,66 @@ impl Selector {
         if is_selected {
             ui.painter()
                 .rect_filled(rect, 0.0, ui.visuals().widgets.active.bg_fill);
-
-            // Draw strip
-            let strip = match orientation {
-                Orientation::Vertical => egui::Rect::from_min_max(
-                    egui::pos2(rect.right() - Self::STRIP_WIDTH, rect.top()),
-                    rect.max,
-                ),
-                Orientation::Horizontal => egui::Rect::from_min_max(
-                    rect.min,
-                    egui::pos2(rect.right(), rect.top() + Self::STRIP_WIDTH),
-                ),
-            };
-            ui.painter()
-                .rect_filled(strip, 0.0, ui.visuals().selection.stroke.color);
         }
+    }
 
-        // Draw close button
-        if close_response.hovered() {
+    fn draw_selection_strip(&self, ui: &egui::Ui, rect: egui::Rect, orientation: Orientation) {
+        let strip = match orientation {
+            Orientation::Vertical => egui::Rect::from_min_max(
+                egui::pos2(rect.right() - Self::STRIP_WIDTH, rect.top()),
+                rect.max,
+            ),
+            Orientation::Horizontal => egui::Rect::from_min_max(
+                rect.min,
+                egui::pos2(rect.right(), rect.top() + Self::STRIP_WIDTH),
+            ),
+        };
+        ui.painter()
+            .rect_filled(strip, 0.0, ui.visuals().selection.stroke.color);
+    }
+
+    fn draw_close_button(&self, ui: &egui::Ui, center: egui::Pos2, is_hovered: bool) {
+        if is_hovered {
             ui.painter().circle_filled(
-                close_center,
+                center,
                 Self::CLOSE_BUTTON_SIZE / 2.0,
                 ui.visuals().widgets.hovered.bg_fill,
             );
         }
 
-        let close_color = if close_response.hovered() {
+        let color = if is_hovered {
             ui.visuals().warn_fg_color
         } else {
             ui.visuals().text_color().linear_multiply(0.6)
         };
 
         let half = Self::CLOSE_BUTTON_SIZE * 0.25;
-        ui.painter().line_segment(
-            [
-                egui::pos2(close_center.x - half, close_center.y - half),
-                egui::pos2(close_center.x + half, close_center.y + half),
-            ],
-            egui::Stroke::new(1.5, close_color),
-        );
-        ui.painter().line_segment(
-            [
-                egui::pos2(close_center.x + half, close_center.y - half),
-                egui::pos2(close_center.x - half, close_center.y + half),
-            ],
-            egui::Stroke::new(1.5, close_color),
-        );
+        let stroke = egui::Stroke::new(1.5, color);
 
-        // Draw text
+        ui.painter().line_segment(
+            [
+                egui::pos2(center.x - half, center.y - half),
+                egui::pos2(center.x + half, center.y + half),
+            ],
+            stroke,
+        );
+        ui.painter().line_segment(
+            [
+                egui::pos2(center.x + half, center.y - half),
+                egui::pos2(center.x - half, center.y + half),
+            ],
+            stroke,
+        );
+    }
+
+    fn draw_text(
+        &self,
+        ui: &egui::Ui,
+        content_rect: egui::Rect,
+        text: &str,
+        is_selected: bool,
+        orientation: Orientation,
+    ) {
         let text_color = if is_selected {
             ui.visuals().selection.stroke.color
         } else {
@@ -180,9 +174,61 @@ impl Selector {
         };
 
         ui.painter()
-            .text(text_pos, align, text, font_id, text_color);
+            .text(text_pos, align, text, self.font_id(ui), text_color);
+    }
 
-        (response.clicked(), close_response.clicked())
+    fn show_item(
+        &mut self,
+        ui: &mut egui::Ui,
+        index: usize,
+        text: &str,
+        orientation: Orientation,
+    ) -> (bool, bool) {
+        let is_selected = index == self.selected_index;
+        let size = self.calculate_size(ui, text, orientation);
+        let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
+
+        // Check for middle click
+        let middle_clicked = response.middle_clicked();
+
+        // Content area (excluding strip for horizontal)
+        let content_rect = match orientation {
+            Orientation::Vertical => rect,
+            Orientation::Horizontal => egui::Rect::from_min_max(
+                egui::pos2(rect.left(), rect.top() + Self::STRIP_WIDTH),
+                rect.max,
+            ),
+        };
+
+        // Close button
+        let close_center = egui::pos2(
+            content_rect.right() - Self::CLOSE_BUTTON_SIZE / 2.0 - Self::CLOSE_BUTTON_MARGIN,
+            content_rect.center().y,
+        );
+        let close_response = ui.interact(
+            egui::Rect::from_center_size(
+                close_center,
+                egui::vec2(Self::CLOSE_BUTTON_SIZE, Self::CLOSE_BUTTON_SIZE),
+            ),
+            ui.id().with(("close", index)),
+            egui::Sense::click(),
+        );
+
+        // Draw everything
+        self.draw_background(ui, rect, is_selected, response.hovered());
+
+        if is_selected {
+            self.draw_selection_strip(ui, rect, orientation);
+        }
+
+        self.draw_close_button(ui, close_center, close_response.hovered());
+        self.draw_text(ui, content_rect, text, is_selected, orientation);
+
+        // Return: (item clicked, should close)
+        (
+            response.clicked(),
+            close_response.clicked() || middle_clicked,
+        )
     }
 
     fn show_impl<T>(
@@ -209,7 +255,7 @@ impl Selector {
 
         if let Some(idx) = removed_index {
             items.remove(idx);
-            if self.selected_index >= items.len() && !items.is_empty() {
+            if !items.is_empty() && self.selected_index >= items.len() {
                 self.selected_index = items.len() - 1;
             }
         }

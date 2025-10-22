@@ -53,6 +53,19 @@ impl ImageViewerState {
         self.pan_offset = -offset_from_image_center * new_zoom;
     }
 
+    /// Fit the entire image to the viewer
+    pub fn fit_to_viewer(&mut self) {
+        let viewer_size = self.viewer_rect.size();
+
+        // Calculate zoom to fit entire image in viewer
+        let zoom_x = viewer_size.x / self.image_size.x;
+        let zoom_y = viewer_size.y / self.image_size.y;
+
+        // Use the smaller zoom to ensure entire image is visible
+        self.zoom = zoom_x.min(zoom_y);
+        self.pan_offset = egui::Vec2::ZERO;
+    }
+
     /// Get the rectangle of the image in viewer coordinates
     pub fn get_image_rect(&self) -> egui::Rect {
         let zoomed_size = self.image_size * self.zoom;
@@ -92,7 +105,7 @@ impl Default for ImageViewerWidget {
 }
 
 impl ImageViewerWidget {
-    const SCROLL_SPEED: f32 = 0.002;
+    const SCROLL_SPEED: f32 = 0.0015;
 
     /// Draw the image given the current state
     fn draw_image(
@@ -137,6 +150,14 @@ impl ImageViewerWidget {
         // setup state
         self.state.image_size = asset.image_size();
         self.state.viewer_rect = response.rect;
+
+        // Handle fit to frame shortcut
+        if response.hovered() {
+            let f_pressed = ui.ctx().input(|i| i.key_pressed(egui::Key::F));
+            if f_pressed {
+                self.state.fit_to_viewer();
+            }
+        }
 
         // Handle scroll wheel zoom
         if response.hovered() {
@@ -229,5 +250,6 @@ impl ImageViewerWidget {
         ui.add(egui::Label::new(
             "- Right click and drag to select zoom area",
         ));
+        ui.add(egui::Label::new("- Press F to fit image to frame"));
     }
 }
