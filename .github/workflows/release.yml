@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  BIN: your-binary-name   # <-- set to your cargo bin name
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+
+  build_and_attach:
+    needs: create_release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            TARGET: aarch64-apple-darwin
+            PKG_EXT: tar.gz
+          - os: macos-latest
+            TARGET: x86_64-apple-darwin
+            PKG_EXT: tar.gz
+          - os: ubuntu-latest
+            TARGET: arm-unknown-linux-musleabihf
+            USE_CROSS: true
+            PKG_EXT: tar.gz
+          - os: ubuntu-latest
+            TARGET: armv7-unknown-linux-musleabihf
+            USE_CROSS: true
+            PKG_EXT: tar.gz
+          - os: ubuntu
