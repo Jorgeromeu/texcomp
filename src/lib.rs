@@ -3,11 +3,12 @@
 mod app;
 mod asset;
 mod image;
-mod render;
 mod selector;
+// mod debug;
+// mod render;
+
+mod model_asset;
+mod model_viewer;
 mod viewer;
 
-#[cfg(debug_assertions)]
-mod debug;
-
-pub use app::TexCompApp;
+pub use app::App;
