@@ -13,7 +13,6 @@ targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 [dependencies]
 egui = "0.32"
 eframe = { version = "0.32", default-features = false, features = [
-    "accesskit",     # Make egui compatible with screen readers. NOTE: adds a lot of dependencies.
     "default_fonts", # Embed the default egui fonts.
     "wgpu",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
@@ -23,16 +22,16 @@ eframe = { version = "0.32", default-features = false, features = [
 egui-wgpu = "0.32"
 log = "0.4.27"
 
-# You only need serde if you want app persistence:
 serde = { version = "1.0.219", features = ["derive"] }
 image = "0.25.8"
 egui-toast = "0.18.0"
+gltf = "1.4.1"
 anyhow = "1.0.100"
-wgpu = {version = "*", features=["webgpu", "webgl"]}
+wgpu = {version = "25.0.2", features=["webgpu", "webgl"]}
 bytemuck = "1.24.0"
-glam = { version = "*", features = ["mint"] }
+glam = { version = "0.30.8", features = ["mint"] }
 dolly = "0.6.0"
-mint = "*"
+mint = "0.5.9"
 three-d = "0.18.2"
 three-d-asset = { version="0.9.2", features=["gltf", "obj", "image", "png", "jpeg"]}
 

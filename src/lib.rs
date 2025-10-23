@@ -5,7 +5,7 @@ mod asset;
 mod image;
 mod selector;
 // mod debug;
-// mod render;
+mod render;
 
 mod model_asset;
 mod model_viewer;
