@@ -1,6 +1,6 @@
 use crate::asset::{Asset, AssetEnum};
-use crate::image::viewer::ImageViewerWidget;
-use crate::model_viewer::ModelViewerWidget;
+use crate::image_viewer::image_viewer::ImageViewerWidget;
+use crate::model_viewer::model_viewer::ModelViewerWidget;
 use crate::selector::Selector;
 use crate::viewer::ViewerWidget;
 use egui_toast::{Toast, ToastOptions, Toasts};

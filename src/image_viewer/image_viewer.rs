@@ -1,4 +1,4 @@
-use crate::image::image::ImageAsset;
+use crate::image_viewer::image_asset::ImageAsset;
 
 pub struct ImageViewerWidget {
     filter_mode: egui::TextureFilter,

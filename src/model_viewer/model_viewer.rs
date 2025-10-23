@@ -1,4 +1,4 @@
-use crate::model_asset::MeshModel;
+use crate::model_viewer::model_asset::MeshModel;
 use crate::render::render::{Mesh, RenderData};
 use crate::viewer::ViewerWidget;
 use dolly::prelude::{Arm, Position, RightHanded, YawPitch};

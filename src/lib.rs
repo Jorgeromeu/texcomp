@@ -2,12 +2,13 @@
 
 mod app;
 mod asset;
-mod image;
 mod render;
 mod selector;
 
-mod model_asset;
-mod model_viewer;
 mod viewer;
+
+// viewers
+mod image_viewer;
+mod model_viewer;
 
 pub use app::App;

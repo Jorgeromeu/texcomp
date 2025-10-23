@@ -1,5 +1,5 @@
-use crate::image::image::ImageAsset;
-use crate::model_asset::MeshModel;
+use crate::image_viewer::image_asset::ImageAsset;
+use crate::model_viewer::model_asset::MeshModel;
 use anyhow::{Context, Result, bail};
 use egui;
 
