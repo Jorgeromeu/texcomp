@@ -10,7 +10,7 @@ const SHADER_SOURCE: &str = include_str!("../shaders/shader.wgsl");
 #[derive(Debug, Clone)]
 pub struct Mesh {
     pub vertices: Vec<[f32; 3]>,
-    pub indices: Vec<u16>,
+    pub indices: Vec<u32>,
 }
 
 #[repr(C)]
@@ -240,7 +240,7 @@ impl egui_wgpu::CallbackTrait for RenderData {
 
         // set vert/index buffer
         render_pass.set_vertex_buffer(0, resources.vertex_buffer.slice(..));
-        render_pass.set_index_buffer(resources.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        render_pass.set_index_buffer(resources.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
         // draw indexed
         render_pass.draw_indexed(0..resources.num_indices, 0, 0..1);

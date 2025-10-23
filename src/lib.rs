@@ -3,9 +3,8 @@
 mod app;
 mod asset;
 mod image;
-mod selector;
-// mod debug;
 mod render;
+mod selector;
 
 mod model_asset;
 mod model_viewer;
